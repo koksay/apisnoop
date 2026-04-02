@@ -1,6 +1,6 @@
 <script>
  import { RELEASES_URL, EARLIEST_VERSION } from '../lib/constants.js';
- import { onMount, afterUpdate } from 'svelte';
+ import { onMount } from 'svelte';
  import { isEmpty, mapValues, groupBy } from 'lodash-es';
  import dayjs from 'dayjs';
  import yaml from 'js-yaml';
@@ -13,18 +13,18 @@
      latestVersion
  } from '../store';
 
- export let params;
- export let query;
+ let { params, query } = $props();
 
- $: ({
-     version,
-     level,
-     category,
-     endpoint
- } = params);
+ let version = $derived(params.version);
 
- afterUpdate(async() => {
-     if ($releases && isEmpty($releases)) {
+ let effectiveVersion = $derived(
+   (version === 'latest' || version == null) ? $latestVersion : version
+ );
+
+ // Load initial releases data
+ $effect(() => {
+   if ($releases && isEmpty($releases)) {
+     (async () => {
        let releasesFromYaml = await fetch(`${RELEASES_URL}/releases.yaml`)
          .then(res => res.blob())
          .then(blob => blob.text())
@@ -44,30 +44,34 @@
            }))
          });
          releases.update(rel => releasesData);
-     }
-
-     if (version === 'latest' || version == null) {
-         version = $latestVersion;
-     };
-   activeFilters.update(af => ({
-     ...af,
-     version,
-     level: '',
-     category: '',
-     endpoint: ''
-   }))
-   if (isEmpty($activeRelease.endpoints)) {
-     let rel = await fetch(`${RELEASES_URL}/${version}.json`).then(res => res.json());
-     releases.update(rels => {
-       rels[version] = rel;
-       return rels;
-     });
+     })();
    }
  });
 
- $: lastUpdate = $activeRelease
+ // Update active filters
+ $effect(() => {
+   activeFilters.update(af => ({
+     ...af,
+     version: effectiveVersion,
+     level: '',
+     category: '',
+     endpoint: ''
+   }));
+ });
+
+ // Load release data
+ $effect(() => {
+   if ($activeRelease && $activeRelease.endpoints && isEmpty($activeRelease.endpoints) && effectiveVersion) {
+     (async () => {
+       let rel = await fetch(`${RELEASES_URL}/${effectiveVersion}.json`).then(res => res.json());
+       releases.update(rels => ({...rels, [effectiveVersion]: rel}));
+     })();
+   }
+ });
+
+ let lastUpdate = $derived($activeRelease
                ? dayjs($activeRelease.release_date).format('DD MMMM, YYYY')
-               : '';
+               : '');
 </script>
 
 <svelte:head>

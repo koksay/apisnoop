@@ -1,10 +1,10 @@
 <script>
- export let title;
+ let { title, children } = $props();
 </script>
 
 <header>
   {#if title}<h2>{title}</h2>{/if}
-  <slot></slot>
+  {@render children?.()}
 </header>
 
 <style>

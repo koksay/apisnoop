@@ -1,5 +1,5 @@
 <script>
- import { afterUpdate, createEventDispatcher } from 'svelte';
+ import { onMount } from 'svelte';
  import { default as embed } from 'vega-embed';
  import { coverageByRelease } from '../../store';
  import { conformanceColours } from '../../lib/colours.js';
@@ -7,12 +7,10 @@
 
  const { tested, untested } = conformanceColours;
 
- const dispatch = createEventDispatcher();
- const handleSwitch = (type) => dispatch('CHART_TYPE_SWITCHED', {chart: 'relchart', type});
+ let { chartType = 'number', onChartTypeSwitched } = $props();
+ const handleSwitch = (type) => onChartTypeSwitched?.({chart: 'relchart', type});
 
- export let chartType = 'number';
-
- $: x = chartType === 'percentage'
+ let x = $derived(chartType === 'percentage'
       ? {
         "field": "total",
         "type": "quantitative",
@@ -32,9 +30,9 @@
           "labelFontSize": 16,
           "titleFontSize": 16,
           "titlePadding": 8
-      }}
+      }});
 
- $: spec = {
+ let spec = $derived({
    "data": {
      "values": $coverageByRelease,
    },
@@ -67,14 +65,14 @@
      }
    },
    "mark": {"type": "bar", "tooltip": true}
- };
+ });
 
- afterUpdate(() => {
-   embed("#coverage-by-release_chart", spec, {actions: true})
-     .catch(err => console.log('error in still untested chart', err));
- })
- {
- }
+ $effect(() => {
+   if ($coverageByRelease.length > 0) {
+     embed("#coverage-by-release_chart", spec, {actions: true})
+       .catch(err => console.log('error in still untested chart', err));
+   }
+ });
 </script>
 
 <section id="coverage-by-release">
@@ -90,11 +88,11 @@
     <div class="chart-type" >
       <strong>View As:</strong>
       <div>
-        <input on:click="{()=>handleSwitch('number')}" type="radio" id="number" name="chart-type" bind:group={chartType} value="number">
+        <input onclick={() => handleSwitch('number')} type="radio" id="number" name="chart-type" checked={chartType === 'number'} value="number">
         <label for="number">Number</label>
       </div>
       <div>
-        <input on:click="{()=>handleSwitch('percentage')}" type="radio" id="percentage" name="chart-type" bind:group={chartType} value="percentage">
+        <input onclick={() => handleSwitch('percentage')} type="radio" id="percentage" name="chart-type" checked={chartType === 'percentage'} value="percentage">
         <label for="percentage">Percentage</label>
       </div>
     </div>

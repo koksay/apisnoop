@@ -9,14 +9,14 @@
  import PendingEndpoints from './pages/conformance-progress/PendingEndpoints.svelte';
  import Nav from './components/Nav.svelte';
  import { flatten } from 'lodash-es';
- import {afterUpdate} from 'svelte';
 
- let page;
- let params;
- let query;
- $: segment = window.location.pathname.split('/')[1];
+ let Page = $state(null);
+ let params = $state({});
+ let query = $state({});
+ let segment = $state('');
 
- afterUpdate(()=> {
+ $effect(() => {
+   Page;
    segment = window.location.pathname.split('/')[1];
  });
 
@@ -42,23 +42,23 @@
  router("/about", (ctx, next)=> {
    params = ctx.params;
    query = {...queryObj(ctx.querystring)};
-   next()}, () => page = About);
+   next()}, () => Page = About);
 
  router("/conformance-progress", (ctx, next) => {
    params = ctx.params;
    query = {...queryObj(ctx.querystring)};
-   next()}, () => page = ConformanceProgress);
+   next()}, () => Page = ConformanceProgress);
  router("/conformance-progress/endpoints/:release?/:filter?", (ctx, next) => {
    params = ctx.params;
    query = {...queryObj(ctx.querystring)};
-   next()}, () => page = ConformanceEndpoints);
- router("/conformance-progress/ineligible-endpoints", () => page = IneligibleEndpoints);
- router("/conformance-progress/pending-endpoints", () => page = PendingEndpoints);
+   next()}, () => Page = ConformanceEndpoints);
+ router("/conformance-progress/ineligible-endpoints", () => Page = IneligibleEndpoints);
+ router("/conformance-progress/pending-endpoints", () => Page = PendingEndpoints);
 
  router('/:version?/:level?/:category?/:endpoint?', (ctx, next) => {
    params = ctx.params;
    query = {...queryObj(ctx.querystring)};
-   next()},  () => page = Home);
+   next()},  () => Page = Home);
 
  router.start();
 </script>
@@ -68,7 +68,9 @@
 </svelte:head>
 <Nav {segment}/>
 <main>
-    <svelte:component this={page} {params} {query}/>
+    {#if Page}
+      <Page {params} {query}/>
+    {/if}
 </main>
 
 <style>

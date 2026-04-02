@@ -1,8 +1,9 @@
+import { spawn } from 'child_process';
 import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import css from 'rollup-plugin-css-only';
 import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
@@ -22,7 +23,7 @@ function serve() {
 	return {
 		writeBundle() {
 			if (server) return;
-			server = require('child_process').spawn('npm', ['run', 'start', '--', '--dev'], {
+			server = spawn('npm', ['run', 'start', '--', '--dev'], {
 				stdio: ['ignore', 'inherit', 'inherit'],
 				shell: true
 			});
@@ -40,6 +41,11 @@ export default {
 		format: 'iife',
 		name: 'app',
 		file: 'public/build/bundle.js'
+	},
+	onwarn(warning, warn) {
+		// Suppress circular dependency warnings from d3
+		if (warning.code === 'CIRCULAR_DEPENDENCY' && (warning.message.includes('node_modules/d3') || warning.message.includes('node_modules/svelte'))) return;
+		warn(warning);
 	},
 	plugins: [
 		svelte({
@@ -59,11 +65,13 @@ export default {
 		// https://github.com/rollup/plugins/tree/master/packages/commonjs
 		resolve({
 			browser: true,
-			dedupe: ['svelte']
+			dedupe: ['svelte'],
+			exportConditions: ['svelte']
 		}),
 		commonjs(),
 		json(),
 		replace({
+			preventAssignment: true,
 			'process.env.BRANCH': JSON.stringify(branch),
 			'process.env.COMMIT': JSON.stringify(commit),
 			'process.env.HEAD': JSON.stringify(head)

@@ -2,11 +2,14 @@
  import { gte } from '../lib/semver.js';
  import { orderBy, partition } from 'lodash-es';
 
- export let endpoints;
+ let { endpoints } = $props();
 
- $: sortedEndpoints = endpoints;
+ let sortedEndpoints = $state([]);
+ let sorting = $state('asc');
 
- $: sorting = 'asc';
+ $effect(() => {
+   sortedEndpoints = endpoints;
+ });
 
  const sortByTested = () => {
    let testedUntested = partition(sortedEndpoints, (e) => e.tested_release !== null);
@@ -46,9 +49,9 @@
 <table>
   <thead>
     <tr>
-      <th on:click="{sortByEndpoint}">Endpoint</th>
-      <th on:click="{sortByPromotion}">Promotion Release</th>
-      <th on:click="{sortByTested}">Tested Release</th>
+      <th onclick={sortByEndpoint}>Endpoint</th>
+      <th onclick={sortByPromotion}>Promotion Release</th>
+      <th onclick={sortByTested}>Tested Release</th>
     </tr>
   </thead>
   <tbody>

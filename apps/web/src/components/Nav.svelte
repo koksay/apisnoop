@@ -1,6 +1,6 @@
 <script>
- export let segment;
- $: home = (segment !== 'about' && segment !== 'conformance-progress');
+ let { segment } = $props();
+ let home = $derived(segment !== 'about' && segment !== 'conformance-progress');
 </script>
 
 <nav>

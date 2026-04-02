@@ -5,15 +5,13 @@
  import { activeRelease, releases, versions } from '../../store';
 
  const SPYGLASS_URL = 'https://prow.k8s.io/view/gcs/kubernetes-ci-logs/logs'
- let releaseSwitch = false;
+ let releaseSwitch = $state(false);
 
- $: ({
-   release,
-   release_date,
-   sources
- } = $activeRelease);
+ let release = $derived($activeRelease?.release);
+ let release_date = $derived($activeRelease?.release_date);
+ let sources = $derived($activeRelease?.sources ?? []);
 
- $: date = dayjs(release_date).format('DD MMMM, YYYY');
+ let date = $derived(release_date ? dayjs(release_date).format('DD MMMM, YYYY') : '');
 
  const prettyPrintNumber = (num) => {
    let numbers = ['zero', 'one', 'two', 'three', 'four', 'five'];
@@ -24,13 +22,14 @@
 
 {#if release}
   <SectionHeader title={""}>
+    {#snippet children()}
     <h2>{release} Testing Coverage
-      <button on:click={() => releaseSwitch = true}>switch release</button>
+      <button onclick={() => releaseSwitch = true}>switch release</button>
     </h2>
     {#if releaseSwitch}
       <ul class='releases'>
       {#each $versions as version}
-        <li><a href={'/'+version+'/'} on:click={() => releaseSwitch = false}>{version}</a></li>
+        <li><a href={'/'+version+'/'} onclick={() => releaseSwitch = false}>{version}</a></li>
       {/each}
       </ul>
     {:else}
@@ -50,9 +49,10 @@
     level (alpha, beta, or stable), then category. The color of an endpoint
     indicates its level of coverage. Gray means no test coverage, faded coloring
     means its tested but not conformance tested, solid coloring means its tested
-    and conformance tested.
+    and conformance tested.</p>
     <p> You can click on any section of the sunburst to zoom into that region.
     Click into the center to zoom out one level</p>
+    {/snippet}
   </SectionHeader>
 {/if}
 

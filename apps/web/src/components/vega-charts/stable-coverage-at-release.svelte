@@ -1,18 +1,17 @@
 <script>
- import { afterUpdate, createEventDispatcher } from 'svelte';
+ import { onMount } from 'svelte';
  import { default as embed } from 'vega-embed';
  import { stableCoverageAtRelease } from '../../store';
  import Link from '../icons/link-solid.svelte';
  import { conformanceColours } from '../../lib/colours.js';
 
- const dispatch = createEventDispatcher();
- const handleSwitch = (type) => dispatch('CHART_TYPE_SWITCHED', {chart: 'stablechart', type});
+ let { chartType = 'number', onChartTypeSwitched } = $props();
+
+ const handleSwitch = (type) => onChartTypeSwitched?.({chart: 'stablechart', type});
 
  const { promotedWithTests, oldCoveredByNew, tested, promotedWithoutTests, untested } = conformanceColours;
 
- export let chartType = 'number';
-
- $: y = chartType === 'percentage'
+ let y = $derived(chartType === 'percentage'
       ? {
         "field": "total",
         "type": "quantitative",
@@ -32,9 +31,9 @@
             "labelFontSize": 16,
             "titleFontSize": 16,
             "titlePadding": 8
-        }}
+        }});
 
-   $: spec = {
+   let spec = $derived({
      "data": {
        "values": $stableCoverageAtRelease,
      },
@@ -78,10 +77,13 @@
        }
      },
      "mark": {"type": "bar"}
+   });
+
+ $effect(() => {
+   if ($stableCoverageAtRelease.length > 0) {
+     embed("#stable-coverage-at-release_chart", spec, {actions: true})
+       .catch(err => console.log('error in stable over time', err));
    }
- afterUpdate(async() => {
-   embed("#stable-coverage-at-release_chart", spec, {actions: true})
-     .catch(err => console.log('error in stable over time', err));
  });
 
 </script>
@@ -100,11 +102,11 @@
     <div class="chart-type" >
     <strong>View As:</strong>
     <div>
-      <input on:click="{()=>handleSwitch('number')}" type="radio" id="stable-number" name="stable-chart-type" bind:group={chartType} value="number">
+      <input onclick={() => handleSwitch('number')} type="radio" id="stable-number" name="stable-chart-type" checked={chartType === 'number'} value="number">
       <label for="stable-number">Number</label>
     </div>
     <div>
-      <input on:click="{()=>handleSwitch('percentage')}" type="radio" id="stable-percentage" name="stable-chart-type" bind:group={chartType} value="percentage">
+      <input onclick={() => handleSwitch('percentage')} type="radio" id="stable-percentage" name="stable-chart-type" checked={chartType === 'percentage'} value="percentage">
       <label for="stable-percentage">Percentage</label>
     </div>
     </div>
