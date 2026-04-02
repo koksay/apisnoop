@@ -1,5 +1,5 @@
 <script>
-  import { onMount, afterUpdate } from 'svelte';
+  import { onMount } from 'svelte';
  import {
    camelCase,
    isEmpty,
@@ -21,11 +21,10 @@
 
  const endpointsURL = `${RELEASES_URL}/conformance-endpoints.json`;
 
- export let params;
- export let query;
+ let { params, query } = $props();
 
- $: release = params.release ? params.release : $latestVersion;
- $: queryFilters = query.filter ? flatten([query.filter]) : [];
+ let release = $derived(params.release ? params.release : $latestVersion);
+ let queryFilters = $derived(query.filter ? flatten([query.filter]) : []);
 
  let updateConfFilters = (qf) => {
    if (!isEmpty(qf)) {
@@ -48,16 +47,17 @@
    confEndpointsRaw.set(endpoints);
    updateConfFilters(queryFilters);
  })
- afterUpdate(() => {
+
+ $effect(() => {
    if (release && $confFilters.release !== release) {
      confFilters.update(f => ({...f, release}));
      updateConfFilters(queryFilters);
    }
-  })
+ });
 
 </script>
 <a href="/conformance-progress">← Back to Conformance Progress</a>
 <h2>Conformance Endpoints for {release} </h2>
 <ConformanceEndpointsFilters />
 <em>Total Endpoints: {$confFilteredEndpoints.length}</em>
-<ConformanceEndpointsTable endpoints="{$confFilteredEndpoints}" />
+<ConformanceEndpointsTable endpoints={$confFilteredEndpoints} />

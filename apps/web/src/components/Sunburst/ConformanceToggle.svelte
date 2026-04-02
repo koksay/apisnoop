@@ -42,7 +42,7 @@
            id='exclude-ineligible-toggle'
            name='exclude-ineligible'
            checked={isFilterInQuery('exclude-ineligible')}
-           on:click={toggleFilter} />
+           onclick={toggleFilter} />
     <label for='exclude-ineligible'>
       exclude conformance ineligible endpoints
       (<em><a href='/conformance-progress/ineligible-endpoints'>which ones are removed?</a></em>)
@@ -53,7 +53,7 @@
            id='exclude-pending-tgogle'
            name='exclude-pending'
            checked={isFilterInQuery('exclude-pending')}
-           on:click={toggleFilter} />
+           onclick={toggleFilter} />
     <label for='exclude-pending'>
       exclude endpoints whose eligibility is pending
       (<em><a href='/conformance-progress/pending-endpoints'>which ones are removed?</a></em>)

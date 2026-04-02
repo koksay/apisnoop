@@ -4,14 +4,14 @@
  import { currentDepth, breadcrumb, coverageAtDepth } from '../../store';
 
  let percentage = (sum, total) => ((sum / total) * 100).toFixed(2);
- $: total = $coverageAtDepth.totalEndpoints;
- $: tested = $coverageAtDepth.testedEndpoints;
- $: confTested = $coverageAtDepth.confTestedEndpoints;
- $: percentTested = `${percentage(tested,total)}%`;
- $: percentConfTested = `${percentage(confTested, total)}%`;
- $: level = $breadcrumb[0] || '';
- $: category= $breadcrumb[1] || '';
- $: endpoint = $breadcrumb[2] || '';
+ let total = $derived($coverageAtDepth.totalEndpoints);
+ let tested = $derived($coverageAtDepth.testedEndpoints);
+ let confTested = $derived($coverageAtDepth.confTestedEndpoints);
+ let percentTested = $derived(`${percentage(tested,total)}%`);
+ let percentConfTested = $derived(`${percentage(confTested, total)}%`);
+ let level = $derived($breadcrumb[0] || '');
+ let category = $derived($breadcrumb[1] || '');
+ let endpoint = $derived($breadcrumb[2] || '');
 </script>
 
 {#if $currentDepth === 'endpoint'}

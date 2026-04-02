@@ -1,20 +1,18 @@
 <script>
  import { endpointCoverage } from '../../store';
- import Icon from 'fa-svelte';
+ import Icon from '../Icon.svelte';
  import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
 
  let checkmark = faCheckCircle;
 
- $: ({
-   endpoint,
-   tested,
-   confTested,
-   description,
-   path,
-   group,
-   version,
-   kind
- } = $endpointCoverage);
+ let endpoint = $derived($endpointCoverage.endpoint);
+ let tested = $derived($endpointCoverage.tested);
+ let confTested = $derived($endpointCoverage.confTested);
+ let description = $derived($endpointCoverage.description);
+ let path = $derived($endpointCoverage.path);
+ let group = $derived($endpointCoverage.group);
+ let version = $derived($endpointCoverage.version);
+ let kind = $derived($endpointCoverage.kind);
 </script>
 
 <div id='coverage-stats'>

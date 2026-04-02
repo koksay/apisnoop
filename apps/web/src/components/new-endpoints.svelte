@@ -1,13 +1,17 @@
 <script>
  import { activeFilters, newEndpoints } from '../store';
  import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
- import Icon from 'fa-svelte';
+ import Icon from './Icon.svelte';
  import { orderBy} from 'lodash-es';
  const checkmark = faCheckCircle;
 
- $: sortedEndpoints = $newEndpoints;
- $: sorting = 'asc';
- $: f = $activeFilters;
+ let sortedEndpoints = $state([]);
+ let sorting = $state('asc');
+ let f = $derived($activeFilters);
+
+ $effect(() => {
+   sortedEndpoints = $newEndpoints;
+ });
 
  const updateSorting = (key) => {
    sorting = sorting === 'asc'
@@ -23,11 +27,11 @@
 <table>
   <thead>
     <tr>
-      <th on:click="{()=> updateSorting('endpoint')}">Endpoint</th>
-      <th on:click="{()=> updateSorting('level')}">Level</th>
-      <th on:click="{() => updateSorting('category')}">Category</th>
-      <th on:click="{() => updateSorting('tested')}">Tested</th>
-      <th on:click="{() => updateSorting('conf_tested')}">Conformance Tested</th>
+      <th onclick={() => updateSorting('endpoint')}>Endpoint</th>
+      <th onclick={() => updateSorting('level')}>Level</th>
+      <th onclick={() => updateSorting('category')}>Category</th>
+      <th onclick={() => updateSorting('tested')}>Tested</th>
+      <th onclick={() => updateSorting('conf_tested')}>Conformance Tested</th>
     </tr>
   </thead>
   <tbody>
@@ -52,6 +56,7 @@
           {:else}
             <Icon class='check fail' icon={checkmark} />
           {/if}
+        </td>
           <td>
             {#if conf_tested}
               <Icon class='success check' icon={checkmark} />
@@ -80,8 +85,11 @@
  }
  td :global(.check) {
    font-size: 1.3em;
-   padding-right: 1rem;
+   padding-right: 0;
    margin-top: 0.1em;
+   display: block;
+   margin-left: auto;
+   margin-right: auto;
  }
  td :global(.success) {
    color: rgba(60, 180, 75, 1);

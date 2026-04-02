@@ -4,7 +4,7 @@
  import { trimEnd } from 'lodash-es';
  import page from 'page';
 
- $: filters = [
+ let filters = $derived([
    {
      name: 'Promoted With Tests',
      filter: 'promotedWithTests',
@@ -35,7 +35,7 @@
      value: $confFilters.untested,
      colour: conformanceColours.untested
    },
- ]
+ ])
 
  const updateFilters = (filter) => {
    confFilters.update(cf => ({...cf, [filter]: !cf[filter]}));
@@ -52,9 +52,9 @@
 <ul>
 {#each filters as filter}
   {#if filter.value}
-    <li style="background: {filter.colour}" on:click="{() => updateFilters(filter.filter)}">{filter.name}</li>
+    <button style="background: {filter.colour}" onclick={() => updateFilters(filter.filter)}>{filter.name}</button>
     {:else}
-    <li on:click="{() => updateFilters(filter.filter)}">{filter.name}</li>
+    <button onclick={() => updateFilters(filter.filter)}>{filter.name}</button>
   {/if}
 {/each}
 </ul>
@@ -66,14 +66,16 @@
   flex-wrap: wrap;
   justify-content: flex-start;
   }
- li {
+ button {
   padding: 0.5rem;
   font-size: 1.1rem;
    display: inline;
    list-style-type: none;
    cursor: pointer;
+   border: none;
+   font-family: inherit;
  }
- li:hover {
+ button:hover {
    background: aliceblue;
  }
 </style>

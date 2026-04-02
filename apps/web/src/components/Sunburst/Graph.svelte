@@ -11,7 +11,6 @@
    mouseOverPath,
    zoomedSunburst
  } from '../../store';
- import { createEventDispatcher } from 'svelte';
 
  const format = d3.format(",d")
  const width = 932
@@ -23,14 +22,12 @@
                .padRadius(radius * 1.5)
                .innerRadius(d => d.y0 * radius)
                .outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1))
- const dispatch = createEventDispatcher();
 
- $: activeDepth = determineDepth($activeFilters);
+ let activeDepth = $derived(determineDepth($activeFilters));
 
  function determineDepth (filters) {
-   // check out depth based on which filters are set.
    let { level, category, endpoint } = filters;
-   let setFilters = compact([level, category, endpoint]) // compact will remove falsy values.
+   let setFilters = compact([level, category, endpoint])
    if (setFilters.length === 3) {
      return 'endpoint'
    } else if (setFilters.length === 2) {
@@ -43,8 +40,6 @@
  };
 
  function depthUp () {
-   // reset the activeFilter for whatever is our current depth.  
-   // This will cause the sunburst to expand to the next previous filter, going up a level.
    let {
      release: version
    } = $activeRelease;
@@ -52,10 +47,9 @@
    if (activeDepth === 'root') {
      return null
    } else if (activeDepth === 'endpoint') {
-     $activeFilters['endpoint'] = '';
-     $activeFilters['category'] === '';
+     activeFilters.update(af => ({...af, endpoint: '', category: ''}));
    } else {
-     $activeFilters[activeDepth] = '';
+     activeFilters.update(af => ({...af, [activeDepth]: ''}));
    }
    let {level, category, endpoint, conformanceOnly} = $activeFilters;
    let newPath = "/" + compact([version,level,category,endpoint]).join('/');
@@ -84,7 +78,6 @@
  }
 
  function clicked (node, e) {
-   // upon clicking of a node, update the active filters and url.
    let {
      release: version
    } = $activeRelease;
@@ -102,7 +95,7 @@
    page.redirect(newPath);
  };
 
- $: partition = data => {
+ function partitionData(data) {
    const root = d3.hierarchy(data)
                   .sum(d => d.value)
                   .sort((a, b) => (b.data.tested - a.data.tested))
@@ -111,15 +104,14 @@
             .size([2 * Math.PI, root.height + 1])
    (root);
  }
- $: root = partition($zoomedSunburst).each(d=> d.current = d);
- $: nodes = root
+
+ let root = $derived.by(() => partitionData($zoomedSunburst).each(d=> d.current = d));
+ let nodes = $derived.by(() => root
    .descendants()
    .slice(1)
    .map((node) => {
-     // take node and determine its opacity based on if its visible and active
      let currentOpacity = 1;
      if ($activeFilters.endpoint !== '' && node.data.endpoint !== '') {
-       // if you and endpoint and we've filtered to endpoint, fade yrself if you aren't the filtered endpoint.
        currentOpacity = ($activeFilters.endpoint === node.data.name)
                       ? 1
                       : 0.3
@@ -130,20 +122,23 @@
                       : 0.3
      }
      return {...node, currentOpacity};
-   })
+   }));
 </script>
 <div class="chart">
-  <svg viewBox="0,0,932,932" style="font: 12px sans-serif;" on:mouseleave={mouseLeave} id='sunburst'>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <svg viewBox="0,0,932,932" style="font: 12px sans-serif;" onmouseleave={mouseLeave} id='sunburst'>
     <g transform="translate({width/2},{width/2})" id='big-g' style="cursor:pointer;">
       <g>
         {#each nodes as node}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <path
           fill={node.data.color}
           fill-opacity={node.currentOpacity}
           d={arc(node.current)}
-          on:mouseover={() => mouseOver(node.current)}
+          onmouseover={() => mouseOver(node.current)}
+          onfocus={() => mouseOver(node.current)}
           style="cursor: pointer;"
-          on:mousedown={(e)=> clicked(node, e)} />
+          onmousedown={(e)=> clicked(node, e)} />
         {/each}
       </g>
       <g pointer-events='none' text-anchor='middle' style='user-select: none;'>
@@ -157,11 +152,13 @@
         </text>
         {/each}
       </g>
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <circle
         r={radius}
         fill={root.data.color}
         pointer-events="all"
-        on:click={depthUp}
+        onclick={depthUp}
+        onkeydown={depthUp}
       />
 
       <text

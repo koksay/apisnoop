@@ -13,16 +13,18 @@
    endpointColour
  } from '../../lib/colours.js';
 
- let epsByName = keyBy($endpoints, 'endpoint');
- $: [level, category, endpoint] = $breadcrumb;
- $: lColour = levelColours[level] || 'white';
- $: cColour = categoryColours[category] || 'white';
- $: eColour = epsByName[endpoint]
-            ? endpointColour(epsByName[endpoint]) 
-            : 'white';
- $: eTextColour = epsByName[endpoint]
+ let epsByName = $derived(keyBy($endpoints, 'endpoint'));
+ let level = $derived($breadcrumb[0]);
+ let category = $derived($breadcrumb[1]);
+ let endpoint = $derived($breadcrumb[2]);
+ let lColour = $derived(levelColours[level] || 'white');
+ let cColour = $derived(categoryColours[category] || 'white');
+ let eColour = $derived(epsByName[endpoint]
+            ? endpointColour(epsByName[endpoint])
+            : 'white');
+ let eTextColour = $derived(epsByName[endpoint]
                 ? epsByName[endpoint]['tested'] ? endpointColour(epsByName[endpoint]) : 'gray'
-                : 'white';
+                : 'white');
 </script>
 
 <div id='breadcrumb'>
